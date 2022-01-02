@@ -1,6 +1,11 @@
 package parser
 
-import "github.com/robertkrimen/otto"
+import (
+	"os"
+	"time"
+
+	"github.com/robertkrimen/otto"
+)
 
 type TagStore map[string]interface{}
 
@@ -20,9 +25,18 @@ type ScriptsTag struct {
 
 type FCL struct {
 	Version    string
+	File *os.File
 	ScriptData *ScriptsTag
 }
 
 type FCLConnector struct {
+	fcl *FCL
 	runtime *otto.Otto
+}
+
+type FCLTimer struct {
+	timer *time.Timer
+	duration time.Duration
+	interval bool
+	call otto.FunctionCall
 }

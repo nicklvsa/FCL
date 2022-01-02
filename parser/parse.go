@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 
 	"github.com/robertkrimen/otto"
 )
@@ -17,9 +19,10 @@ var (
 	tagStore = make(TagStore)
 )
 
-func makeOtto() *otto.Otto {
+func makeOtto(fcl *FCL) *otto.Otto {
 	runtime := otto.New()
 	runtime.Set("$$", &FCLConnector{
+		fcl: fcl,
 		runtime: runtime,
 	})
 
@@ -35,16 +38,16 @@ func makeOtto() *otto.Otto {
 	return runtime
 }
 
-func getOtto(singleton bool) *otto.Otto {
+func getOtto(fcl *FCL, singleton bool) *otto.Otto {
 	if singleton {
 		once.Do(func() {
-			globalOtto = makeOtto()
+			globalOtto = makeOtto(fcl)
 		})
 
 		return globalOtto
 	}
 
-	return makeOtto()
+	return makeOtto(fcl)
 }
 
 func getAttr(name string, attrs []xml.Attr) *string {
@@ -67,6 +70,13 @@ func yesNoAttr(s *string) bool {
 	}
 
 	return *s == "yes"
+}
+
+func listenSignal(fcl *FCL) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGABRT, syscall.SIGTERM)
+	<-c
+	fcl.File.Close()
 }
 
 func processTag(dec *xml.Decoder, elem *xml.StartElement, fcl *FCL) error {
@@ -99,8 +109,6 @@ func processTag(dec *xml.Decoder, elem *xml.StartElement, fcl *FCL) error {
 				return err
 			}
 
-			
-
 			tagStore.Set(tagName, data.Content)
 		}
 	}
@@ -109,18 +117,18 @@ func processTag(dec *xml.Decoder, elem *xml.StartElement, fcl *FCL) error {
 } 
 
 func ParseInput(fileName string) (*FCL, error) {
-	cfgFile, err := os.Open(fileName)
+	cfgFile, err := os.OpenFile(fileName, os.O_RDWR, 0777)
 	if err != nil {
 		return nil, err
 	}
 
-	defer cfgFile.Close()
-
 	fcl := FCL{
+		File: cfgFile,
 		ScriptData: new(ScriptsTag),
 	}
 
 	dec := xml.NewDecoder(cfgFile)
+	go listenSignal(&fcl)
 
 	for {
 		tok, err := dec.Token()
@@ -140,18 +148,19 @@ func ParseInput(fileName string) (*FCL, error) {
 		}
 	}
 	
-	if err := ParseScripts(fcl.ScriptData); err != nil {
+	if err := ParseScripts(&fcl); err != nil {
 		return nil, err
 	}
 
 	return &fcl, nil
 }
 
-func ParseScripts(scripts *ScriptsTag) error {	
+func ParseScripts(fcl *FCL) error {	
+	scripts := fcl.ScriptData
+
 	for _, script := range scripts.Scripts {
-		exe := getOtto(scripts.Shared)
-		_, err := exe.Run(script.Content)
-		if err != nil {
+		exe := getOtto(fcl, scripts.Shared)
+		if err := UseEventLoop(exe, script.Content); err != nil {
 			return err
 		}
 	}

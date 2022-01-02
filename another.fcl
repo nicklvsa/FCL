@@ -13,8 +13,9 @@
             console.log(key);
         </script>
         <script>
-            var t = $$.get("key").val();
-            console.log(t);
+            setTimeout(function() {
+                $$.call("msg", "nicklvsa", "hello");
+            }, 1000);
         </script>
     </scripts>
 </fcl>
