@@ -1,0 +1,27 @@
+<fcl version="1.0">
+    <key>some value</key>
+    <another>another %{key}</another>
+
+    <scripts shared="no">
+        <script ref="scriptone">
+            // $$ = fcl interfactive javascript object
+            const example = $$.get("key");
+            const envExample = $$.env("SOME_ENV_VAR");
+
+            console.log(example);
+            console.log(envExample);
+
+            const transform = () => {
+                // val() = extract raw value from $$ object
+                if (example.val().length > 0) {
+                    // set = set variable AND fcl key
+                    example.set("something new");
+                    // assign = set just fcl key
+                    example.assign("something new");
+                }
+            };
+
+            transform();
+        </script>
+    </scripts>
+</fcl>

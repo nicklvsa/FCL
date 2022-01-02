@@ -1,0 +1,20 @@
+<fcl version="1.0">
+    <example>yo test</example>
+    <key>some value %{example}</key>
+    <another>%{example} another %{key}</another>
+
+    <scripts shared="no">
+        <script ref="scriptone">
+            var p = "hello world";
+            console.log(p);
+        </script>
+        <script ref="scriptwo">
+            var key = $$.get("key").assign("something new");
+            console.log(key);
+        </script>
+        <script>
+            var t = $$.get("key").val();
+            console.log(t);
+        </script>
+    </scripts>
+</fcl>
