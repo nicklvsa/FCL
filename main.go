@@ -2,8 +2,10 @@ package main
 
 import (
 	"fcl/parser"
+	"fcl/shared"
 	"flag"
 	"fmt"
+	"strings"
 )
 
 func main() {
@@ -11,6 +13,11 @@ func main() {
 
 	flag.StringVar(&inputFile, "input", "", "-input <config.fcl>")
 	flag.Parse()
+
+	if ok, errs := shared.ValidateArgs(inputFile); !ok {
+		fmt.Println("The following errors occurred: ")
+		panic(strings.Join(errs, ", "))
+	}
 
 	config, err := parser.ParseInput(inputFile)
 	if err != nil {

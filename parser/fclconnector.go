@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 
 	"github.com/robertkrimen/otto"
@@ -19,7 +20,7 @@ func stringifyVals(args []otto.Value) []string {
 }
 
 func wrap(f *FCLConnector, item string, v otto.Value) otto.Value {
-	wrapper := map[string]func(call otto.FunctionCall) otto.Value {
+	wrapper := map[string]func(call otto.FunctionCall) otto.Value{
 		"set": func(call otto.FunctionCall) otto.Value {
 			updatedValue := call.Argument(0).String()
 
@@ -34,7 +35,7 @@ func wrap(f *FCLConnector, item string, v otto.Value) otto.Value {
 		"assign": func(call otto.FunctionCall) otto.Value {
 			updatedValue := call.Argument(0).String()
 			tagStore.Set(item, updatedValue)
-			
+
 			return v
 		},
 		"val": func(call otto.FunctionCall) otto.Value {
@@ -89,6 +90,22 @@ func (f *FCLConnector) Call(call otto.FunctionCall) otto.Value {
 	return value
 }
 
+func (f *FCLConnector) OS(call otto.FunctionCall) otto.Value {
+	currentOS := runtime.GOOS
+
+	switch currentOS {
+	case "darwin":
+		currentOS = "macos"
+	}
+
+	value, err := f.runtime.ToValue(currentOS)
+	if err != nil {
+		panic(err)
+	}
+
+	return value
+}
+
 func (f *FCLConnector) Key(call otto.FunctionCall) otto.Value {
 	key := call.Argument(0).String()
 	value := call.Argument(1).String()
@@ -99,8 +116,8 @@ func (f *FCLConnector) Key(call otto.FunctionCall) otto.Value {
 		data := strings.TrimSpace(
 			fmt.Sprintf(
 				"<%s>%s</%s>",
-				key, 
-				tagStore.GetStr(key), 
+				key,
+				tagStore.GetStr(key),
 				key,
 			),
 		)

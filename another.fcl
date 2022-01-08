@@ -14,7 +14,8 @@
         </script>
         <script>
             setTimeout(function() {
-                $$.call("msg", "nicklvsa", "hello");
+                var cmd = $$.os() === "linux" ? "notify-send" : "msg";
+                $$.call(cmd, "nicklvsa", "Current Operating System: " + $$.os());
             }, 1000);
         </script>
     </scripts>

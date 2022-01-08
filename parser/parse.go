@@ -14,19 +14,19 @@ import (
 )
 
 var (
-	once sync.Once
+	once       sync.Once
 	globalOtto *otto.Otto
-	tagStore = make(TagStore)
+	tagStore   = make(TagStore)
 )
 
 func makeOtto(fcl *FCL) *otto.Otto {
 	runtime := otto.New()
 	runtime.Set("$$", &FCLConnector{
-		fcl: fcl,
+		fcl:     fcl,
 		runtime: runtime,
 	})
 
-	// hacky way to convert golang public struct methods to 
+	// hacky way to convert golang public struct methods to
 	// lower case javascript methods
 	runtime.Run(`
 		$$ = Object.keys($$).reduce(function(acc, key) {
@@ -114,7 +114,7 @@ func processTag(dec *xml.Decoder, elem *xml.StartElement, fcl *FCL) error {
 	}
 
 	return nil
-} 
+}
 
 func ParseInput(fileName string) (*FCL, error) {
 	cfgFile, err := os.OpenFile(fileName, os.O_RDWR, 0777)
@@ -123,7 +123,7 @@ func ParseInput(fileName string) (*FCL, error) {
 	}
 
 	fcl := FCL{
-		File: cfgFile,
+		File:       cfgFile,
 		ScriptData: new(ScriptsTag),
 	}
 
@@ -147,7 +147,7 @@ func ParseInput(fileName string) (*FCL, error) {
 			continue
 		}
 	}
-	
+
 	if err := ParseScripts(&fcl); err != nil {
 		return nil, err
 	}
@@ -155,7 +155,7 @@ func ParseInput(fileName string) (*FCL, error) {
 	return &fcl, nil
 }
 
-func ParseScripts(fcl *FCL) error {	
+func ParseScripts(fcl *FCL) error {
 	scripts := fcl.ScriptData
 
 	for _, script := range scripts.Scripts {
